@@ -1,7 +1,9 @@
 package com.example.catapp.data.mapper
 
 import com.example.catapp.data.local.CatEntity
+import com.example.catapp.data.local.FavoriteEntity
 import com.example.catapp.data.model.CatBreedsResponse
+import com.example.catapp.data.model.CatWithFavorite
 import com.example.catapp.domain.model.Cat
 
 fun CatBreedsResponse.toCat(): Cat {
@@ -44,5 +46,19 @@ fun CatEntity.toCat(): Cat {
         breedTemperament = this.breedTemperament,
         breedUrl = this.breedUrl,
         isFavorite = false
+    )
+}
+
+fun CatWithFavorite.toCat(): Cat {
+    return Cat (
+        id = this.cat.id,
+        name = this.cat.name,
+        url = this.cat.url,
+        breedDescription = this.cat.breedDescription,
+        breedLifeSpan = this.cat.breedLifeSpan,
+        breedOrigin = this.cat.breedOrigin,
+        breedTemperament = this.cat.breedTemperament,
+        breedUrl = this.cat.breedUrl,
+        isFavorite = this.favorite != null
     )
 }

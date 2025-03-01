@@ -1,5 +1,6 @@
 package com.example.catapp.domain.repository
 
+import com.example.catapp.data.model.CatWithFavorite
 import com.example.catapp.domain.model.Cat
 import kotlinx.coroutines.flow.Flow
 

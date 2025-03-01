@@ -4,5 +4,9 @@ import com.example.catapp.domain.model.Cat
 import kotlinx.coroutines.flow.Flow
 
 interface CatRepository {
-    suspend fun getCats(): Flow<List<Cat>>
+
+    suspend fun getAllCats(): Flow<List<Cat>>
+    suspend fun getFavoriteCats(): Flow<List<Cat>>
+    suspend fun getCats(page: Int, limit: Int)
+    suspend fun toggleFavorite(catId: String, isFavorite: Boolean)
 }

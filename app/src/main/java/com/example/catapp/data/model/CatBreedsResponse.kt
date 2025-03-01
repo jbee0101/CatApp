@@ -1,6 +1,6 @@
 package com.example.catapp.data.model
 
-data class Breed(
+data class CatBreedsResponse(
     val weight: Weight,
     val id: String,
     val name: String,
@@ -33,7 +33,5 @@ data class Breed(
     val suppressed_tail: Int?,
     val short_legs: Int?,
     val wikipedia_url: String?,
-    val hypoallergenic: Int?,
     val reference_image_id: String?
 )
-

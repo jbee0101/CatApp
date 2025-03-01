@@ -1,45 +1,63 @@
 package com.example.catapp.presentation.viewmodel
 
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.catapp.domain.model.Cat
 import com.example.catapp.domain.repository.CatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @HiltViewModel
 class CatViewModel @Inject constructor(
     private val repository: CatRepository
 ) : ViewModel() {
 
-    private val _cats = MutableStateFlow<List<Cat>>(emptyList())
-    val cats: StateFlow<List<Cat>> = _cats.asStateFlow()
+//    private val _cats = MutableLiveData<List<Cat>>()
+//    val cats: LiveData<List<Cat>> = _cats
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    private val _cats = MutableLiveData<List<Cat>>(emptyList())  // StateFlow to hold data
+    val cats: LiveData<List<Cat>> get() = _cats
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private var currentPage = 0
+    private var pageLimit = 12
 
     init {
-        getCats()
-    }
-
-    private fun getCats() {
         viewModelScope.launch {
-            repository.getCats()
-                .onStart { _isLoading.value = true }
-                .catch { e -> _error.value = e.localizedMessage ?: "An error occurred" }
-                .collect { catList ->
-                    _cats.value = catList
-                    _isLoading.value = false
+            repository.getAllCats()
+                .collect { catsList ->
+                    if (catsList.isEmpty()) {
+                        // If the database is empty, fetch the first page from API
+                        fetchCats(currentPage, pageLimit)
+                    } else {
+                        _cats.value = catsList
+                    }
                 }
         }
     }
+
+    fun loadMore() {
+        currentPage++
+        fetchCats(currentPage, pageLimit)
+    }
+
+    fun fetchCats(page: Int, limit: Int) {
+        viewModelScope.launch {
+            Log.d("ViewModel", "fetchCats method called with page: $page, limit: $limit")
+            repository.getCats(page, limit)
+        }
+    }
+
+    fun toggleFavorite(catId: String, isFavorite: Boolean) {
+        viewModelScope.launch {
+            repository.toggleFavorite(catId, isFavorite)
+        }
+    }
 }
+
+

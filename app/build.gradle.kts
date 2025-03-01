@@ -54,6 +54,7 @@ dependencies {
     // hilt
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.runtime.livedata)
     ksp(libs.hilt.android.compiler)
     // Jetpack Navigation
     implementation (libs.androidx.navigation.compose)

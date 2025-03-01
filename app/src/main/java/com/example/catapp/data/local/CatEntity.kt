@@ -9,13 +9,12 @@ data class CatEntity(
     val id: String,
     val name: String,
     val url: String,
-    val imageWidth: Int,
-    val imageHeight: Int,
     val breedName: String,
     val breedDescription: String,
     val breedLifeSpan: String,
     val breedOrigin: String,
     val breedTemperament: String,
-    val breedUrl: String
+    val breedUrl: String,
+    val isFavorite: Boolean
 )
 

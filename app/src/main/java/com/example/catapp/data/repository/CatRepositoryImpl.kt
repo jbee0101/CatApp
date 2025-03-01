@@ -3,11 +3,15 @@ package com.example.catapp.data.repository
 import android.util.Log
 import com.example.catapp.data.local.CatDao
 import com.example.catapp.data.local.CatEntity
+import com.example.catapp.data.mapper.toCat
+import com.example.catapp.data.mapper.toCatEntity
 import com.example.catapp.data.remote.CatApiService
 import com.example.catapp.domain.model.Cat
 import com.example.catapp.domain.repository.CatRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CatRepositoryImpl @Inject constructor(
@@ -15,58 +19,61 @@ class CatRepositoryImpl @Inject constructor(
     private val catDao: CatDao
 ) : CatRepository {
 
-    override suspend fun getCats(): Flow<List<Cat>> = flow {
-        try {
-            val response = catApiService.getCatImages() // Need to write logic for handling pagination
-            Log.i("CatRep", "========= Response: $response ========")
-            val cats = response.map { apiCat ->
-                Cat(
-                    id = apiCat.id,
-                    name = apiCat.breeds.firstOrNull()?.name ?: "Unknown",
-                    url = apiCat.url,
-                    width = apiCat.width,
-                    height = apiCat.height,
-                    breedDescription = apiCat.breeds.firstOrNull()?.description ?: "No description",
-                    breedLifeSpan = apiCat.breeds.firstOrNull()?.life_span ?: "Unknown",
-                    breedOrigin = apiCat.breeds.firstOrNull()?.origin ?: "Unknown",
-                    breedTemperament = apiCat.breeds.firstOrNull()?.temperament ?: "Unknown",
-                    breedUrl = apiCat.breeds.firstOrNull()?.wikipedia_url ?: ""
-                )
-            }
-
-            catDao.insertCats(cats.map { cat ->
-                CatEntity(
-                    id = cat.id,
-                    name = cat.name,
-                    url = cat.url,
-                    imageWidth = cat.width,
-                    imageHeight = cat.height,
-                    breedName = cat.name,
-                    breedDescription = cat.breedDescription,
-                    breedLifeSpan = cat.breedLifeSpan,
-                    breedOrigin = cat.breedOrigin,
-                    breedTemperament = cat.breedTemperament,
-                    breedUrl = cat.breedUrl
-                )
-            })
-
-            emit(cats)
-        } catch (e: Exception) {
-            val cachedCats = catDao.getAllCats().map { catEntity ->
-                Cat(
-                    id = catEntity.id,
-                    name = catEntity.name,
-                    url = catEntity.url,
-                    width = catEntity.imageWidth,
-                    height = catEntity.imageHeight,
-                    breedDescription = catEntity.breedDescription,
-                    breedLifeSpan = catEntity.breedLifeSpan,
-                    breedOrigin = catEntity.breedOrigin,
-                    breedTemperament = catEntity.breedTemperament,
-                    breedUrl = catEntity.breedUrl
-                )
-            }
-            emit(cachedCats)
+    override suspend fun getAllCats(): Flow<List<Cat>> {
+        return catDao.getAllCats().map { entities ->
+            Log.d("CatRepository", "Loading ${entities.size} cats from database")
+            entities.map { it.toCat() }
         }
+    }
+
+    override suspend fun getFavoriteCats(): Flow<List<Cat>> {
+        return catDao.getFavoriteCats().map { entities ->
+            entities.map { it.toCat() }
+        }
+    }
+
+    private suspend fun getFavoritesWithCats(): Map<String,CatEntity> = withContext(Dispatchers.IO) {
+        val existingFavorites = catDao.getFavoriteCatsOnce().associateBy { it.id }
+        return@withContext existingFavorites
+    }
+
+    override suspend fun getCats(page: Int, limit: Int) {
+        try {
+            Log.d("CatRepository", "Fetching cats from API for page: $page")
+            val catsResponse = catApiService.getCatBreeds(limit, page)
+
+            if (catsResponse.isEmpty()) {
+                Log.d("CatRepository", "No cats received from API")
+            } else {
+                Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
+            }
+
+            val existingFavorites = getFavoritesWithCats()
+
+            val catsWithImages = catsResponse.map { catResponse ->
+                val imageUrl = fetchCatImageUrl(catResponse.reference_image_id) // Fetch image URL
+                val isFavorite = existingFavorites[catResponse.id]?.isFavorite ?: false
+                catResponse.toCat().copy(url = imageUrl, isFavorite = isFavorite)
+            }
+
+            Log.d("CatRepository", "Saving ${catsWithImages.size} cats to database")
+
+            catDao.insertCats(catsWithImages.map { it.toCatEntity() })
+
+//            emit(catsWithImages)
+
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Error fetching cats", e)
+        }
+    }
+
+    override suspend fun toggleFavorite(catId: String, isFavorite: Boolean) {
+        catDao.updateFavorite(catId, isFavorite)
+    }
+
+    private suspend fun fetchCatImageUrl(imageId: String?): String {
+        if (imageId.isNullOrEmpty()) return ""
+        val imageResponse = catApiService.getCatImage(imageId)
+        return imageResponse.url
     }
 }

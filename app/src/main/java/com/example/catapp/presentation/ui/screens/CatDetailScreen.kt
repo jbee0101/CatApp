@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Favorite
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +36,20 @@ import coil.request.ImageRequest
 import com.example.catapp.R
 import com.example.catapp.presentation.viewmodel.CatViewModel
 
+/**
+ * This composable function displays the detailed information of a cat.
+ * Additionally, it allows the user to toggle the cat's favorite status.
+ *
+ * @param catId The unique ID of the cat.
+ * @param catImageUrl The URL of the cat's image.
+ * @param catName The name of the cat.
+ * @param catOrigin The origin of the cat breed.
+ * @param catTemperament The temperament of the cat breed.
+ * @param catDescription A brief description of the cat breed.
+ * @param isFavorite A boolean value indicating whether the cat is marked as a favorite.
+ * @param viewModel The view model responsible for handling business logic related to the cat.
+ * @param onBackPress A function that handles the back press action and navigates to the previous screen.
+ */
 @Composable
 fun CatDetailScreen(
     catId: String,

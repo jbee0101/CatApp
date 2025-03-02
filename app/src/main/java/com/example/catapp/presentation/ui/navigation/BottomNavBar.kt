@@ -6,6 +6,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 
+/**
+ * A composable function that displays a bottom navigation bar with two navigation items:
+ * "All Cats" and "Favorites".
+ *
+ * @param navController The NavHostController used to navigate between screens.
+ * @param selectedTab The currently selected tab, used to highlight the active item in the navigation bar.
+ */
 @Composable
 fun BottomNavBar(navController: NavHostController, selectedTab: String) {
     NavigationBar {
@@ -14,7 +21,7 @@ fun BottomNavBar(navController: NavHostController, selectedTab: String) {
         items.forEach { (title, route) ->
             NavigationBarItem(
                 selected = selectedTab == route,
-                icon = { /* Add Icon if needed */ },
+                icon = { /* Icon will be added later */ },
                 label = { Text(title) },
                 onClick = {
                     navController.navigate(route) {

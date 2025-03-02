@@ -1,6 +1,5 @@
 package com.example.catapp.presentation.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,26 +8,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
@@ -42,29 +35,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.catapp.R
@@ -73,6 +58,12 @@ import com.example.catapp.presentation.ui.navigation.Screen
 import com.example.catapp.presentation.viewmodel.CatViewModel
 import com.example.catapp.utils.AppGlobal.DUMMY_URL
 
+/**
+ * CatListScreen displays a list of cats with search functionality.
+ * It shows grid of cat items based on the data state. Also handling loading progress indicator
+ *
+ * @param navController Navigation controller used to navigate to the CatDetails screen.
+ */
 @Composable
 fun CatListScreen(navController: NavController) {
 
@@ -139,6 +130,15 @@ fun CatListScreen(navController: NavController) {
     }
 }
 
+/**
+ * CatGridItem displays individual cat details in a grid item, including an image and name.
+ * It also allows toggling the favorite status of a cat.
+ *
+ * @param cat The cat object to display in the grid item.
+ * @param isFavoriteScreen Flag indicating if this item is displayed in the favorites screen.
+ * @param onFavoriteToggle Callback to toggle the favorite status of the cat.
+ * @param onClick Callback to navigate to the detailed cat screen when the grid item is clicked.
+ */
 @Composable
 fun CatGridItem(
     cat: Cat,
@@ -213,6 +213,12 @@ fun CatGridItem(
     }
 }
 
+/**
+ * SearchBar is a composable that displays a search input field with clear functionality.
+ *
+ * @param query The current search query.
+ * @param onQueryChanged Callback to handle the search query change.
+ */
 @Composable
 fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
     OutlinedTextField(

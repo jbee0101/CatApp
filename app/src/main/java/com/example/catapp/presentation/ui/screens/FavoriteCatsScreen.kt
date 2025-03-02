@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -21,6 +20,12 @@ import androidx.navigation.NavController
 import com.example.catapp.presentation.ui.navigation.Screen
 import com.example.catapp.presentation.viewmodel.CatViewModel
 
+/**
+ * FavoriteCatsScreen displays a list of favorite cats.
+ * Displays a text if there is no favorite cat in the list.
+ *
+ * @param navController Navigation controller used to navigate to the CatDetails screen.
+ */
 @Composable
 fun FavoriteCatsScreen(navController: NavController) {
     val viewModel: CatViewModel = hiltViewModel()

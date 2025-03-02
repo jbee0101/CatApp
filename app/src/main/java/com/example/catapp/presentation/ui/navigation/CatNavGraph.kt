@@ -1,6 +1,5 @@
 package com.example.catapp.presentation.ui.navigation
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +22,11 @@ import com.example.catapp.presentation.ui.screens.FavoriteCatsScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
+/**
+ * A composable function that sets up the navigation graph for the CatApp.
+ * It includes navigation between the screens for the list of cats, favorite cats, and cat details.
+ * It also includes a bottom navigation bar and a top app bar.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatNavGraph() {

@@ -8,11 +8,11 @@ import retrofit2.http.Query
 
 interface CatApiService {
     @GET("breeds")
-    suspend fun getCatBreeds(
-        @Query("limit") limit : Int,
-        @Query("page") page: Int,
-    ): List<CatBreedsResponse>
+    suspend fun getCatBreeds(): List<CatBreedsResponse>
 
     @GET("images/{image_id}")
     suspend fun getCatImage(@Path("image_id") imageId: String): ImageResponse
+
+    @GET("breeds/search")
+    suspend fun searchCats(@Query("q") query: String): List<CatBreedsResponse>
 }

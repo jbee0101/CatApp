@@ -2,6 +2,7 @@ package com.example.catapp.data.mapper
 
 import com.example.catapp.data.local.CatEntity
 import com.example.catapp.data.local.FavoriteEntity
+import com.example.catapp.data.local.SearchCatEntity
 import com.example.catapp.data.model.CatBreedsResponse
 import com.example.catapp.data.model.CatWithFavorite
 import com.example.catapp.domain.model.Cat
@@ -35,17 +36,18 @@ fun Cat.toCatEntity(): CatEntity {
     )
 }
 
-fun CatEntity.toCat(): Cat {
-    return Cat (
+fun Cat.toSearchCatEntity(): SearchCatEntity {
+    return SearchCatEntity (
         id = this.id,
         name = this.name,
         url = this.url,
+        breedName = this.name,
         breedDescription = this.breedDescription,
         breedLifeSpan = this.breedLifeSpan,
         breedOrigin = this.breedOrigin,
         breedTemperament = this.breedTemperament,
         breedUrl = this.breedUrl,
-        isFavorite = false
+        isFavorite = this.isFavorite
     )
 }
 
@@ -60,5 +62,19 @@ fun CatWithFavorite.toCat(): Cat {
         breedTemperament = this.cat.breedTemperament,
         breedUrl = this.cat.breedUrl,
         isFavorite = this.favorite != null
+    )
+}
+
+fun SearchCatEntity.toCat(): Cat {
+    return Cat (
+        id = this.id,
+        name = this.name,
+        url = this.url,
+        breedDescription = this.breedDescription,
+        breedLifeSpan = this.breedLifeSpan,
+        breedOrigin = this.breedOrigin,
+        breedTemperament = this.breedTemperament,
+        breedUrl = this.breedUrl,
+        isFavorite = this.isFavorite
     )
 }

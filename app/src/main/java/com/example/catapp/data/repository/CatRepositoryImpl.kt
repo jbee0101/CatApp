@@ -6,6 +6,7 @@ import com.example.catapp.data.local.CatEntity
 import com.example.catapp.data.local.FavoriteEntity
 import com.example.catapp.data.mapper.toCat
 import com.example.catapp.data.mapper.toCatEntity
+import com.example.catapp.data.mapper.toSearchCatEntity
 import com.example.catapp.data.model.CatWithFavorite
 import com.example.catapp.data.remote.CatApiService
 import com.example.catapp.domain.model.Cat
@@ -34,17 +35,16 @@ class CatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getCats(page: Int, limit: Int) {
+    override suspend fun fetchCats() {
         try {
-            Log.d("CatRepository", "Fetching cats from API for page: $page")
-            val catsResponse = catApiService.getCatBreeds(limit, page)
+            Log.d("CatRepository", "Fetching cats from API")
+            val catsResponse = catApiService.getCatBreeds()
 
             if (catsResponse.isEmpty()) {
                 Log.d("CatRepository", "No cats received from API")
             } else {
                 Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
             }
-
 
             val catsWithImages = catsResponse.map { catResponse ->
                 val imageUrl = fetchCatImageUrl(catResponse.reference_image_id)
@@ -72,5 +72,31 @@ class CatRepositoryImpl @Inject constructor(
         if (imageId.isNullOrEmpty()) return ""
         val imageResponse = catApiService.getCatImage(imageId)
         return imageResponse.url
+    }
+
+    override suspend fun searchCats(query: String) {
+        Log.d("CatRepository", "Fetching cats from search API for $query ")
+        val catsResponse = catApiService.searchCats(query)
+
+        if (catsResponse.isEmpty()) {
+            Log.d("CatRepository", "No cats received from API")
+        } else {
+            Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
+        }
+
+        val catsWithImages = catsResponse.map { catResponse ->
+            val imageUrl = fetchCatImageUrl(catResponse.reference_image_id)
+            catResponse.toCat().copy(url = imageUrl)
+        }
+
+        catDao.clearSearchCats()
+        catDao.insertSearchCats( catsWithImages.map { it.toSearchCatEntity() })
+    }
+
+    override suspend fun getSearchCats(): Flow<List<Cat>> {
+        return catDao.getSearchCatsData().map { entities ->
+            Log.d("CatRepository", "Loading ${entities.size} search cats from database")
+            entities.map { it.toCat() }
+        }
     }
 }

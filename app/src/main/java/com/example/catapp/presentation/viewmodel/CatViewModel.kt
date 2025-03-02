@@ -8,12 +8,19 @@ import androidx.lifecycle.viewModelScope
 import com.example.catapp.domain.model.Cat
 import com.example.catapp.domain.repository.CatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class CatViewModel @Inject constructor(
     private val repository: CatRepository
@@ -28,27 +35,37 @@ class CatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow<Boolean>(false)
     val isLoading: StateFlow<Boolean> get() = _isLoading
 
-    private var currentPage = 0
-    private var pageLimit = 15
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
 
     init {
-        viewModelScope.launch {
-            repository.getAllCats()
-                .collect { catsList ->
-                    if (catsList.isEmpty()) {
-                        fetchCats(currentPage, pageLimit)
+        viewModelScope.launch(Dispatchers.IO) {
+            _searchQuery.debounce(500).distinctUntilChanged().collectLatest { query ->
+                    if (query.isNotEmpty()) {
+                        withContext(Dispatchers.Main) { _isLoading.value = true }
+                        repository.searchCats(query)
+                        getSearchCatData()
+                        withContext(Dispatchers.Main) { _isLoading.value = false }
                     } else {
-                        _cats.value = catsList
+                        repository.getAllCats().collect { catsList ->
+                                if (catsList.isEmpty()) {
+                                    fetchCats()
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        _cats.value = catsList
+                                    }
+                                }
+                            }
                     }
                 }
         }
     }
 
-    fun fetchCats(page: Int, limit: Int) {
+    fun fetchCats() {
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d("ViewModel", "fetchCats method called with page: $page, limit: $limit")
-            repository.getCats(page, limit)
+            Log.d("ViewModel", "fetchCats method called")
+            repository.fetchCats()
             _isLoading.value = false
         }
     }
@@ -64,6 +81,20 @@ class CatViewModel @Inject constructor(
     fun toggleFavorite(catId: String, isFavorite: Boolean) {
         viewModelScope.launch {
             repository.toggleFavorite(catId, isFavorite)
+        }
+    }
+
+    fun onSearchQueryChanged(newQuery: String) {
+        _searchQuery.value = newQuery
+    }
+
+    private fun getSearchCatData() {
+        viewModelScope.launch {
+            repository.getSearchCats().collect { searchList ->
+                withContext(Dispatchers.Main) {
+                    _cats.value = searchList
+                }
+            }
         }
     }
 }

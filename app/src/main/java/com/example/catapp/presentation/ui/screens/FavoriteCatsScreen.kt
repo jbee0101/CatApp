@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.catapp.presentation.ui.navigation.Screen
 import com.example.catapp.presentation.viewmodel.CatViewModel
 
 @Composable
@@ -44,7 +45,20 @@ fun FavoriteCatsScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(favoriteCats) { cat ->
-                CatGridItem (cat, viewModel::toggleFavorite)
+                CatGridItem (cat, true, viewModel::toggleFavorite) {
+                    navController.navigate(
+                        Screen.CatDetails.createRoute(
+                            catId = cat.id,
+                            catImageUrl = cat.url,
+                            catName = cat.name,
+                            catOrigin = cat.breedOrigin,
+                            catLifeSpan = cat.breedLifeSpan,
+                            catTemperament = cat.breedTemperament,
+                            catDescription = cat.breedDescription,
+                            isFavorite = cat.isFavorite
+                        )
+                    )
+                }
             }
         }
     }

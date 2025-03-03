@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -30,41 +31,48 @@ import com.example.catapp.presentation.viewmodel.CatViewModel
 fun FavoriteCatsScreen(navController: NavController) {
     val viewModel: CatViewModel = hiltViewModel()
     val favoriteCats by viewModel.favoriteCats.observeAsState(emptyList())
+    val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.fetchFavoriteCats()
     }
 
-    if (favoriteCats.isEmpty()) {
-        Text(
-            text = "No favorite cats yet!",
-            modifier = Modifier.fillMaxSize().padding(top = 200.dp),
-            textAlign = TextAlign.Center
-        )
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(favoriteCats) { cat ->
-                CatGridItem (cat, true, viewModel::toggleFavorite) {
-                    navController.navigate(
-                        Screen.CatDetails.createRoute(
-                            catId = cat.id,
-                            catImageUrl = cat.url,
-                            catName = cat.name,
-                            catOrigin = cat.breedOrigin,
-                            catLifeSpan = cat.breedLifeSpan,
-                            catTemperament = cat.breedTemperament,
-                            catDescription = cat.breedDescription,
-                            isFavorite = cat.isFavorite
+    if (uiState) {
+        if (favoriteCats.isEmpty()) {
+            Text(
+                text = "No favorite cats yet!",
+                modifier = Modifier.fillMaxSize().padding(top = 200.dp),
+                textAlign = TextAlign.Center
+            )
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(favoriteCats) { cat ->
+                    CatGridItem (cat, true, viewModel::toggleFavorite) {
+                        navController.navigate(
+                            Screen.CatDetails.createRoute(
+                                catId = cat.id,
+                                catImageUrl = cat.url,
+                                catName = cat.name,
+                                catOrigin = cat.breedOrigin,
+                                catLifeSpan = cat.breedLifeSpan,
+                                catTemperament = cat.breedTemperament,
+                                catDescription = cat.breedDescription,
+                                isFavorite = cat.isFavorite
+                            )
                         )
-                    )
+                    }
                 }
             }
+        }
+    } else {
+        ErrorStateBox {
+            viewModel.onRefreshUi(isFavorite = true)
         }
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -71,60 +72,66 @@ fun CatListScreen(navController: NavController) {
     val cats by viewModel.cats.observeAsState(emptyList())
     val isLoading by viewModel.isLoading.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyGridState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-
-        if (isLoading && cats.isEmpty()) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .wrapContentSize(Alignment.Center)
-            )
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars)
-            ) {
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChanged = { viewModel.onSearchQueryChanged(it) }
+        if (uiState) {
+            if (isLoading && cats.isEmpty()) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .wrapContentSize(Alignment.Center)
                 )
-
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .wrapContentSize(Alignment.Center)
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                ) {
+                    SearchBar(
+                        query = searchQuery,
+                        onQueryChanged = { viewModel.onSearchQueryChanged(it) }
                     )
-                } else {
-                    LazyVerticalGrid(
-                        state = listState,
-                        columns = GridCells.Fixed(3),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(cats) { cat ->
-                            CatGridItem(cat,false, viewModel::toggleFavorite) {
-                                navController.navigate(
-                                    Screen.CatDetails.createRoute(
-                                        catId = cat.id,
-                                        catImageUrl = cat.url.ifEmpty { DUMMY_URL },
-                                        catName = cat.name,
-                                        catOrigin = cat.breedOrigin,
-                                        catLifeSpan = cat.breedLifeSpan,
-                                        catTemperament = cat.breedTemperament,
-                                        catDescription = cat.breedDescription,
-                                        isFavorite = cat.isFavorite
+
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .wrapContentSize(Alignment.Center)
+                        )
+                    } else {
+                        LazyVerticalGrid(
+                            state = listState,
+                            columns = GridCells.Fixed(3),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(cats) { cat ->
+                                CatGridItem(cat,false, viewModel::toggleFavorite) {
+                                    navController.navigate(
+                                        Screen.CatDetails.createRoute(
+                                            catId = cat.id,
+                                            catImageUrl = cat.url.ifEmpty { DUMMY_URL },
+                                            catName = cat.name,
+                                            catOrigin = cat.breedOrigin,
+                                            catLifeSpan = cat.breedLifeSpan,
+                                            catTemperament = cat.breedTemperament,
+                                            catDescription = cat.breedDescription,
+                                            isFavorite = cat.isFavorite
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     }
                 }
+            }
+        } else {
+            ErrorStateBox {
+                viewModel.onRefreshUi()
             }
         }
     }
@@ -239,5 +246,31 @@ fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
         }
     )
 }
+
+@Composable
+fun ErrorStateBox(onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Some problem with getting data",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            Button(onClick = onRetry) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
 
 

@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -64,6 +65,10 @@ class CatViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    // false represent error and true represent success
+    private val _uiState = MutableStateFlow<Boolean>(true)
+    val uiState: StateFlow<Boolean> get() = _uiState
+
     /**
      * Initializes the ViewModel, listens for changes to the search query, and triggers appropriate actions:
      * - Searches for cats if a query is provided.
@@ -71,24 +76,20 @@ class CatViewModel @Inject constructor(
      */
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            _searchQuery.debounce(500).distinctUntilChanged().collectLatest { query ->
+            try {
+                _searchQuery.debounce(500).distinctUntilChanged().collectLatest { query ->
                     if (query.isNotEmpty()) {
                         withContext(dispatcher) { _isLoading.value = true }
                         searchCatsUseCase.invoke(query)
                         getSearchCatData()
                         withContext(dispatcher) { _isLoading.value = false }
                     } else {
-                        getAllCatsUseCase.invoke().collect { catsList ->
-                                if (catsList.isEmpty()) {
-                                    fetchCats()
-                                } else {
-                                    withContext(dispatcher) {
-                                        _cats.value = catsList
-                                    }
-                                }
-                            }
+                        getAllCats()
                     }
                 }
+            } catch (e: IOException) {
+               withContext(dispatcher) { _uiState.value = false }
+            }
         }
     }
 
@@ -98,10 +99,37 @@ class CatViewModel @Inject constructor(
      */
     private fun fetchCats() {
         viewModelScope.launch {
-            _isLoading.value = true
-            Log.d("ViewModel", "fetchCats method called")
-            fetchCatsUseCase.invoke()
-            _isLoading.value = false
+            try {
+                _isLoading.value = true
+                Log.d("ViewModel", "fetchCats method called")
+                fetchCatsUseCase.invoke()
+                _isLoading.value = false
+            }  catch (e: IOException) {
+                withContext(dispatcher) { _uiState.value = false }
+            }
+        }
+    }
+
+    /**
+     * Get the list of all cats from database.
+     * If there is no cats in database then fetch from server
+     * Updates the _cats LiveData with the result.
+     */
+    private fun getAllCats() {
+        viewModelScope.launch {
+            try {
+                getAllCatsUseCase.invoke().collect { catsList ->
+                    if (catsList.isEmpty()) {
+                        fetchCats()
+                    } else {
+                        withContext(dispatcher) {
+                            _cats.value = catsList
+                        }
+                    }
+                }
+            }  catch (e: IOException) {
+                withContext(dispatcher) { _uiState.value = false }
+            }
         }
     }
 
@@ -111,8 +139,12 @@ class CatViewModel @Inject constructor(
      */
     fun fetchFavoriteCats() {
         viewModelScope.launch {
-            getFavoriteCatsUseCase.invoke().collect { favList ->
-                _favoriteCats.postValue(favList)
+            try {
+                getFavoriteCatsUseCase.invoke().collect { favList ->
+                    _favoriteCats.postValue(favList)
+                }
+            }  catch (e: IOException) {
+                withContext(dispatcher) { _uiState.value = false }
             }
         }
     }
@@ -124,7 +156,11 @@ class CatViewModel @Inject constructor(
      */
     fun toggleFavorite(catId: String, isFavorite: Boolean) {
         viewModelScope.launch {
-            toggleFavoriteUseCase.invoke(catId, isFavorite)
+            try {
+                toggleFavoriteUseCase.invoke(catId, isFavorite)
+            }  catch (e: IOException) {
+                withContext(dispatcher) { _uiState.value = false }
+            }
         }
     }
 
@@ -143,10 +179,29 @@ class CatViewModel @Inject constructor(
      */
     private fun getSearchCatData() {
         viewModelScope.launch {
-            getSearchCatsUseCase.invoke().collect { searchList ->
-                withContext(dispatcher) {
-                    _cats.value = searchList
+            try {
+                getSearchCatsUseCase.invoke().collect { searchList ->
+                    withContext(dispatcher) {
+                        _cats.value = searchList
+                    }
                 }
+            }  catch (e: IOException) {
+                withContext(dispatcher) { _uiState.value = false }
+            }
+        }
+    }
+
+    /**
+     * Refresh the screen by calling getAllCatsUseCase for CatListScreen and getFavoriteCatsUseCase for FavoriteCatScreen.
+     * Updates the _cats LiveData with the result.
+     */
+    fun onRefreshUi(isFavorite: Boolean = false) {
+        viewModelScope.launch {
+            _uiState.value = true
+            if (isFavorite) {
+                fetchFavoriteCats()
+            } else {
+                getAllCats()
             }
         }
     }

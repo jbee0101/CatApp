@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.pow
 
@@ -33,9 +34,15 @@ class CatRepositoryImpl @Inject constructor(
      * @return A [Flow] of a list of [Cat] domain models.
      */
     override suspend fun getAllCats(): Flow<List<Cat>> {
-        return catDao.getAllCatsWithFavorites().map { entities ->
-            Log.d("CatRepository", "Loading ${entities.size} cats from database")
-            entities.map { it.toCat() }
+        return try {
+            catDao.getAllCatsWithFavorites().map { entities ->
+                Log.d("CatRepository", "Loading ${entities.size} cats from database")
+                entities.map { it.toCat() }
+            }
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Error fetching cats from database: ${e.message}")
+            // Handle database error
+            throw IOException("Error fetching cats from the local database")
         }
     }
 
@@ -45,8 +52,14 @@ class CatRepositoryImpl @Inject constructor(
      * @return A [Flow] of a list of favorite [Cat] domain models.
      */
     override suspend fun getFavoriteCats(): Flow<List<Cat>> {
-        return catDao.getFavoriteCats().map { entities ->
-            entities.map { it.toCat() }
+        return try {
+            catDao.getFavoriteCats().map { entities ->
+                entities.map { it.toCat() }
+            }
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Error fetching favorite cats from database: ${e.message}")
+            // Handle database error
+            throw IOException("Error fetching favorite cats from the local database")
         }
     }
 
@@ -91,9 +104,18 @@ class CatRepositoryImpl @Inject constructor(
                     delay(waitTime)
                     attempt++
                 } else {
-                    throw e
+                    Log.e("CatRepository", "HTTP error while fetching cats: ${e.message}")
+                    throw IOException("Error fetching cats from API: ${e.message}")
                 }
+            } catch (e: Exception) {
+                Log.e("CatRepository", "Unknown error while fetching cats: ${e.message}")
+                throw IOException("Unexpected error while fetching cats: ${e.message}")
             }
+        }
+
+        if (!success) {
+            Log.e("CatRepository", "Failed to fetch cats after $retries attempts")
+            throw IOException("Failed to fetch cats after $retries attempts")
         }
     }
 
@@ -107,10 +129,15 @@ class CatRepositoryImpl @Inject constructor(
      * @param isFavorite The new favorite status of the cat.
      */
     override suspend fun toggleFavorite(catId: String, isFavorite: Boolean) {
-        if (isFavorite) {
-            catDao.addToFavorites(FavoriteEntity(catId))
-        } else {
-            catDao.removeFromFavorites(catId)
+        try {
+            if (isFavorite) {
+                catDao.addToFavorites(FavoriteEntity(catId))
+            } else {
+                catDao.removeFromFavorites(catId)
+            }
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Error toggling favorite for cat $catId: ${e.message}")
+            throw IOException("Error toggling favorite for cat $catId: ${e.message}")
         }
     }
 
@@ -124,8 +151,16 @@ class CatRepositoryImpl @Inject constructor(
      */
     private suspend fun fetchCatImageUrl(imageId: String?): String {
         if (imageId.isNullOrEmpty()) return ""
-        val imageResponse = catApiService.getCatImage(imageId)
-        return imageResponse.url
+        return try {
+            val imageResponse = catApiService.getCatImage(imageId)
+            imageResponse.url
+        } catch (e: HttpException) {
+            Log.e("CatRepository", "HTTP error fetching cat image URL: ${e.message}")
+            throw IOException("Error fetching cat image URL: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Unknown error fetching cat image URL: ${e.message}")
+            throw IOException("Unexpected error fetching cat image URL: ${e.message}")
+        }
     }
 
     /**
@@ -137,22 +172,30 @@ class CatRepositoryImpl @Inject constructor(
      * @param query The search query.
      */
     override suspend fun searchCats(query: String) {
-        Log.d("CatRepository", "Fetching cats from search API for $query ")
-        val catsResponse = catApiService.searchCats(query)
+        try {
+            Log.d("CatRepository", "Fetching cats from search API for $query ")
+            val catsResponse = catApiService.searchCats(query)
 
-        if (catsResponse.isEmpty()) {
-            Log.d("CatRepository", "No cats received from API")
-        } else {
-            Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
+            if (catsResponse.isEmpty()) {
+                Log.d("CatRepository", "No cats received from API")
+            } else {
+                Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
+            }
+
+            val catsWithImages = catsResponse.map { catResponse ->
+                val imageUrl = fetchCatImageUrl(catResponse.referenceImageId)
+                catResponse.toCat().copy(url = imageUrl)
+            }
+
+            catDao.clearSearchCats()
+            catDao.insertSearchCats(catsWithImages.map { it.toSearchCatEntity() })
+        } catch (e: HttpException) {
+            Log.e("CatRepository", "HTTP error while searching for cats: ${e.message}")
+            throw IOException("Error searching for cats: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Unknown error while searching for cats: ${e.message}")
+            throw IOException("Unexpected error while searching for cats: ${e.message}")
         }
-
-        val catsWithImages = catsResponse.map { catResponse ->
-            val imageUrl = fetchCatImageUrl(catResponse.referenceImageId)
-            catResponse.toCat().copy(url = imageUrl)
-        }
-
-        catDao.clearSearchCats()
-        catDao.insertSearchCats(catsWithImages.map { it.toSearchCatEntity() })
     }
 
     /**
@@ -161,9 +204,14 @@ class CatRepositoryImpl @Inject constructor(
      * @return A [Flow] of a list of search cats mapped to [Cat] domain models.
      */
     override suspend fun getSearchCats(): Flow<List<Cat>> {
-        return catDao.getSearchCatsData().map { entities ->
-            Log.d("CatRepository", "Loading ${entities.size} search cats from database")
-            entities.map { it.toCat() }
+        return try {
+            catDao.getSearchCatsData().map { entities ->
+                Log.d("CatRepository", "Loading ${entities.size} search cats from database")
+                entities.map { it.toCat() }
+            }
+        } catch (e: Exception) {
+            Log.e("CatRepository", "Error fetching search cats from database: ${e.message}")
+            throw IOException("Error fetching search cats from the local database")
         }
     }
 }

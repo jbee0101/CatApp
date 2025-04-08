@@ -19,7 +19,7 @@ fun CatBreedsResponse.toCat(): Cat {
     return Cat (
         id = this.id,
         name = this.name,
-        url = DUMMY_URL,
+        url = this.image?.url ?: DUMMY_URL,
         breedDescription = this.description ?: "No description",
         breedLifeSpan = this.lifeSpan ?: "Unknown",
         breedOrigin = this.origin ?: "Unknown",

@@ -17,6 +17,7 @@ import com.google.gson.annotations.SerializedName
  * @property lifeSpan The expected lifespan of the breed (nullable).
  * @property wikipediaUrl The URL to the breed's Wikipedia page (nullable).
  * @property referenceImageId The ID of the breed's reference image (nullable).
+ * @property image The image object of the breed (nullable).
  */
 data class CatBreedsResponse(
     @SerializedName("id") val id: String,
@@ -26,6 +27,7 @@ data class CatBreedsResponse(
     @SerializedName("description") val description: String?,
     @SerializedName("life_span") val lifeSpan: String?,
     @SerializedName("wikipedia_url") val wikipediaUrl: String?,
-    @SerializedName("reference_image_id") val referenceImageId: String?
+    @SerializedName("reference_image_id") val referenceImageId: String?,
+    @SerializedName("image") val image: Image?
 )
 

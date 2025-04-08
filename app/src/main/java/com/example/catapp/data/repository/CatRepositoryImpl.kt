@@ -87,14 +87,12 @@ class CatRepositoryImpl @Inject constructor(
                     Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
                 }
 
-                val catsWithImages = catsResponse.map { catResponse ->
-                    val imageUrl = fetchCatImageUrl(catResponse.referenceImageId)
-                    catResponse.toCat().copy(url = imageUrl)
-                }
+                Log.d("CatRepository", "Saving ${catsResponse.size} cats to database")
 
-                Log.d("CatRepository", "Saving ${catsWithImages.size} cats to database")
-
-                catDao.insertCats(catsWithImages.map { it.toCatEntity() })
+                catDao.insertCats(catsResponse
+                    .map { it.toCat() }
+                    .map { it.toCatEntity() }
+                )
 
                 success = true
             } catch (e: HttpException) {
@@ -142,28 +140,6 @@ class CatRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Fetches the image URL for a cat based on the image ID.
-     *
-     * Calls the API to fetch the image URL using the image ID.
-     *
-     * @param imageId The image ID associated with the cat.
-     * @return The URL of the cat image.
-     */
-    private suspend fun fetchCatImageUrl(imageId: String?): String {
-        if (imageId.isNullOrEmpty()) return ""
-        return try {
-            val imageResponse = catApiService.getCatImage(imageId)
-            imageResponse.url
-        } catch (e: HttpException) {
-            Log.e("CatRepository", "HTTP error fetching cat image URL: ${e.message}")
-            throw IOException("Error fetching cat image URL: ${e.message}")
-        } catch (e: Exception) {
-            Log.e("CatRepository", "Unknown error fetching cat image URL: ${e.message}")
-            throw IOException("Unexpected error fetching cat image URL: ${e.message}")
-        }
-    }
-
-    /**
      * Searches for cats by the given query string and saves the results to the local database.
      *
      * This method calls the API to search for cats by [query], fetches images for each cat,
@@ -181,14 +157,11 @@ class CatRepositoryImpl @Inject constructor(
             } else {
                 Log.d("CatRepository", "Received ${catsResponse.size} cats from API")
             }
-
-            val catsWithImages = catsResponse.map { catResponse ->
-                val imageUrl = fetchCatImageUrl(catResponse.referenceImageId)
-                catResponse.toCat().copy(url = imageUrl)
-            }
-
             catDao.clearSearchCats()
-            catDao.insertSearchCats(catsWithImages.map { it.toSearchCatEntity() })
+            catDao.insertSearchCats(catsResponse
+                .map { it.toCat() }
+                .map { it.toSearchCatEntity() }
+            )
         } catch (e: HttpException) {
             Log.e("CatRepository", "HTTP error while searching for cats: ${e.message}")
             throw IOException("Error searching for cats: ${e.message}")

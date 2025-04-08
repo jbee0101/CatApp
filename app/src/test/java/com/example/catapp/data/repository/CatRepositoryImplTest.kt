@@ -9,7 +9,6 @@ import com.example.catapp.data.mapper.toCatEntity
 import com.example.catapp.data.mapper.toSearchCatEntity
 import com.example.catapp.data.model.CatBreedsResponse
 import com.example.catapp.data.model.CatWithFavorite
-import com.example.catapp.data.model.ImageResponse
 import com.example.catapp.data.remote.CatApiService
 import com.example.catapp.domain.repository.CatRepository
 import io.mockk.every
@@ -143,13 +142,10 @@ class CatRepositoryImplTest {
         )
 
         `when`(catApiService.getCatBreeds()).thenReturn(catApiResponse)
-        `when`(catApiService.getCatImage("imageId")).thenReturn(ImageResponse(url = "https://mtek3d.com/wp-content/uploads/2018/01/image-placeholder-500x500.jpg"))
-
         catRepository.fetchCats()
 
         // Assert: Verify that the API service methods are called and data is inserted into the database
         verify(catApiService).getCatBreeds()
-        verify(catApiService).getCatImage("imageId")
         verify(catDao).insertCats(catApiResponse.map { it.toCat().toCatEntity() })
     }
 
@@ -186,13 +182,10 @@ class CatRepositoryImplTest {
         )
 
         `when`(catApiService.searchCats(query)).thenReturn(catApiResponse)
-        `when`(catApiService.getCatImage("imageId")).thenReturn(ImageResponse(url = "https://mtek3d.com/wp-content/uploads/2018/01/image-placeholder-500x500.jpg"))
-
         catRepository.searchCats(query)
 
         // Assert: Verify that the API methods are called and the data is saved in the database
         verify(catApiService).searchCats(query)
-        verify(catApiService).getCatImage("imageId")
         verify(catDao).clearSearchCats()
         verify(catDao).insertSearchCats(catApiResponse.map { it.toCat().toSearchCatEntity() })
     }

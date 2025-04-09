@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.catapp.presentation.ui.navigation.Screen
-import com.example.catapp.presentation.viewmodel.CatViewModel
+import com.example.catapp.presentation.viewmodel.FavoriteCatViewModel
 
 /**
  * FavoriteCatsScreen displays a list of favorite cats.
@@ -29,7 +29,7 @@ import com.example.catapp.presentation.viewmodel.CatViewModel
  */
 @Composable
 fun FavoriteCatsScreen(navController: NavController) {
-    val viewModel: CatViewModel = hiltViewModel()
+    val viewModel: FavoriteCatViewModel = hiltViewModel()
     val favoriteCats by viewModel.favoriteCats.observeAsState(emptyList())
     val uiState by viewModel.uiState.collectAsState()
 
@@ -72,7 +72,7 @@ fun FavoriteCatsScreen(navController: NavController) {
         }
     } else {
         ErrorStateBox {
-            viewModel.onRefreshUi(isFavorite = true)
+            viewModel.onRefreshUi()
         }
     }
 }

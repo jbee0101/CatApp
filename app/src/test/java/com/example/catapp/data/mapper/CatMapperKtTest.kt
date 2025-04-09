@@ -5,6 +5,7 @@ import com.example.catapp.data.local.FavoriteEntity
 import com.example.catapp.data.local.SearchCatEntity
 import com.example.catapp.data.model.CatBreedsResponse
 import com.example.catapp.data.model.CatWithFavorite
+import com.example.catapp.data.model.Image
 import com.example.catapp.domain.model.Cat
 import com.example.catapp.utils.AppGlobal.DUMMY_URL
 import org.junit.Assert.assertEquals
@@ -25,7 +26,8 @@ class CatMapperTest {
             origin = "Iran",
             temperament = "Affectionate",
             wikipediaUrl = "https://wikipedia.org/Persian_cat",
-            referenceImageId = "ImageId"
+            referenceImageId = "ImageId",
+            image = Image(id = "id", url = DUMMY_URL, width = 200, height = 200)
         )
 
         val expectedCat = Cat(

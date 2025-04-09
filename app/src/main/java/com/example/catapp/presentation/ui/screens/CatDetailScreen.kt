@@ -31,10 +31,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.catapp.R
-import com.example.catapp.presentation.viewmodel.CatViewModel
+import com.example.catapp.presentation.viewmodel.CatDetailViewModel
 
 /**
  * This composable function displays the detailed information of a cat.
@@ -47,7 +48,6 @@ import com.example.catapp.presentation.viewmodel.CatViewModel
  * @param catTemperament The temperament of the cat breed.
  * @param catDescription A brief description of the cat breed.
  * @param isFavorite A boolean value indicating whether the cat is marked as a favorite.
- * @param viewModel The view model responsible for handling business logic related to the cat.
  * @param onBackPress A function that handles the back press action and navigates to the previous screen.
  */
 @Composable
@@ -59,9 +59,9 @@ fun CatDetailScreen(
     catTemperament: String,
     catDescription: String,
     isFavorite: Boolean,
-    viewModel: CatViewModel,
     onBackPress: () -> Unit
 ) {
+    val viewModel: CatDetailViewModel = hiltViewModel()
     var favoriteState by remember { mutableStateOf(isFavorite) }
 
     Column(

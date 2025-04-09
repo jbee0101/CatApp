@@ -9,7 +9,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -89,7 +88,6 @@ fun CatNavGraph() {
                     catTemperament = catTemperament,
                     catDescription = catDescription,
                     isFavorite = isFavorite,
-                    viewModel = hiltViewModel(),
                     onBackPress = { navController.popBackStack() }
                 )
             }

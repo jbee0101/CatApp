@@ -35,7 +35,6 @@ import javax.inject.Inject
  *
  * @param dispatcher Main dispatcher for updating states value.
  * @param getAllCatsUseCase Use case for fetching all available cats.
- * @param getFavoriteCatsUseCase Use case for fetching the list of favorite cats.
  * @param fetchCatsUseCase Use case for fetching fresh cat data from a remote source.
  * @param toggleFavoriteUseCase Use case for toggling the favorite status of a cat.
  * @param searchCatsUseCase Use case for performing a search for cats based on a query.
@@ -46,7 +45,6 @@ import javax.inject.Inject
 class CatViewModel @Inject constructor(
     @MainDispatcher private val dispatcher: CoroutineDispatcher,
     private val getAllCatsUseCase: GetAllCatsUseCase,
-    private val getFavoriteCatsUseCase: GetFavoriteCatsUseCase,
     private val fetchCatsUseCase: FetchCatsUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val searchCatsUseCase: SearchCatsUseCase,
@@ -56,17 +54,14 @@ class CatViewModel @Inject constructor(
     private val _cats = MutableLiveData<List<Cat>>(emptyList())
     val cats: LiveData<List<Cat>> get() = _cats
 
-    private val _favoriteCats = MutableLiveData<List<Cat>>(emptyList())
-    val favoriteCats: LiveData<List<Cat>> get() = _favoriteCats
-
-    private val _isLoading = MutableStateFlow<Boolean>(false)
+    private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> get() = _isLoading
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
     // false represent error and true represent success
-    private val _uiState = MutableStateFlow<Boolean>(true)
+    private val _uiState = MutableStateFlow(true)
     val uiState: StateFlow<Boolean> get() = _uiState
 
     /**
@@ -134,22 +129,6 @@ class CatViewModel @Inject constructor(
     }
 
     /**
-     * Fetches the list of favorite cats using the GetFavoriteCatsUseCase.
-     * Updates the _favoriteCats LiveData with the result.
-     */
-    fun fetchFavoriteCats() {
-        viewModelScope.launch {
-            try {
-                getFavoriteCatsUseCase.invoke().collect { favList ->
-                    _favoriteCats.postValue(favList)
-                }
-            }  catch (e: IOException) {
-                withContext(dispatcher) { _uiState.value = false }
-            }
-        }
-    }
-
-    /**
      * Toggles the favorite status of a specific cat.
      * @param catId The ID of the cat to update.
      * @param isFavorite The new favorite status of the cat.
@@ -192,17 +171,13 @@ class CatViewModel @Inject constructor(
     }
 
     /**
-     * Refresh the screen by calling getAllCatsUseCase for CatListScreen and getFavoriteCatsUseCase for FavoriteCatScreen.
+     * Refresh the screen by calling getAllCatsUseCase for CatListScreen.
      * Updates the _cats LiveData with the result.
      */
-    fun onRefreshUi(isFavorite: Boolean = false) {
+    fun onRefreshUi() {
         viewModelScope.launch {
             _uiState.value = true
-            if (isFavorite) {
-                fetchFavoriteCats()
-            } else {
                 getAllCats()
-            }
         }
     }
 }

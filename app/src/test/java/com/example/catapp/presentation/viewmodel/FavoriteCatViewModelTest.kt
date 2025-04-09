@@ -1,14 +1,13 @@
 package com.example.catapp.presentation.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.Observer
 import com.example.catapp.domain.model.Cat
-import com.example.catapp.domain.usecase.FetchCatsUseCase
-import com.example.catapp.domain.usecase.GetAllCatsUseCase
-import com.example.catapp.domain.usecase.GetSearchCatsUseCase
-import com.example.catapp.domain.usecase.SearchCatsUseCase
+import com.example.catapp.domain.usecase.GetFavoriteCatsUseCase
 import com.example.catapp.domain.usecase.ToggleFavoriteUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -18,13 +17,14 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.junit.jupiter.api.Assertions.*
+import org.mockito.Mockito.`when`
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 
 @ExperimentalCoroutinesApi
-class CatViewModelTest {
+class FavoriteCatViewModelTest {
 
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()
@@ -43,12 +43,9 @@ class CatViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var viewModel: CatViewModel
-    private val getAllCatsUseCase: GetAllCatsUseCase = mock()
-    private val fetchCatsUseCase: FetchCatsUseCase = mock()
+    private lateinit var viewModel: FavoriteCatViewModel
+    private val getFavoriteCatsUseCase: GetFavoriteCatsUseCase = mock()
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase = mock()
-    private val searchCatsUseCase: SearchCatsUseCase = mock()
-    private val getSearchCatsUseCase: GetSearchCatsUseCase = mock()
 
     /**
      * Setup method to initialize ViewModel before each test
@@ -56,13 +53,10 @@ class CatViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = CatViewModel(
+        viewModel = FavoriteCatViewModel(
             dispatcher = testDispatcher,
-            getAllCatsUseCase,
-            fetchCatsUseCase,
-            toggleFavoriteUseCase,
-            searchCatsUseCase,
-            getSearchCatsUseCase
+            getFavoriteCatsUseCase,
+            toggleFavoriteUseCase
         )
     }
 
@@ -72,6 +66,25 @@ class CatViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    /**
+     * Test to verify that the 'favoriteCats' LiveData is updated correctly when 'fetchFavoriteCats' is called
+     */
+    @Test
+    fun `fetchFavoriteCats updates favoriteCats LiveData`() = runTest {
+        val favoriteCatsList = listOf(mockCatData)
+
+        `when`(getFavoriteCatsUseCase.invoke()).thenReturn(flowOf(favoriteCatsList))
+
+        val observer: Observer<List<Cat>> = mock()
+        viewModel.favoriteCats.observeForever(observer)
+
+        viewModel.fetchFavoriteCats()
+
+        advanceUntilIdle()
+
+        verify(observer).onChanged(favoriteCatsList)
     }
 
     /**
@@ -87,17 +100,5 @@ class CatViewModelTest {
         advanceUntilIdle()
 
         verify(toggleFavoriteUseCase, times(1)).invoke(catId, isFavorite)
-    }
-
-    /**
-     * Test to verify that 'onSearchQueryChanged' correctly updates the search query in the ViewModel
-     */
-    @Test
-    fun `onSearchQueryChanged updates searchQuery`() {
-        val query = "Persian"
-
-        viewModel.onSearchQueryChanged(query)
-
-        assert(viewModel.searchQuery.value == query)
     }
 }
